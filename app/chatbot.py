@@ -1,8 +1,8 @@
 import os
 import google.generativeai as genai
 from dotenv import load_dotenv
-from retriever import DocumentRetriever
-from utils import format_chat_history
+from app.retriever import DocumentRetriever
+from app.utils import format_chat_history
 from typing import List, Dict, Any
 
 load_dotenv()

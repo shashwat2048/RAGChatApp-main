@@ -6,24 +6,46 @@ from sentence_transformers import SentenceTransformer
 from typing import List, Dict, Any
 
 class DocumentRetriever:
-    def __init__(self, index_path: str = "../embeddings/faiss_index.bin", 
-                 doc_path: str = "../embeddings/faiss_index.pkl",
+    def __init__(self, index_path: str = None, 
+                 doc_path: str = None,
                  model_name: str = 'all-MiniLM-L6-v2'):
         
         self.model = SentenceTransformer(model_name)
+        
+        # Determine paths - try multiple locations for flexibility
+        possible_index_paths = [
+            "embeddings/faiss_index.bin",
+            "../embeddings/faiss_index.bin",
+            "./embeddings/faiss_index.bin",
+            os.path.join(os.path.dirname(__file__), "..", "embeddings", "faiss_index.bin")
+        ]
+        
+        possible_doc_paths = [
+            "embeddings/faiss_index.pkl",
+            "../embeddings/faiss_index.pkl",
+            "./embeddings/faiss_index.pkl",
+            os.path.join(os.path.dirname(__file__), "..", "embeddings", "faiss_index.pkl")
+        ]
+        
+        if index_path is None:
+            # Try relative paths from different starting points
+            index_path = next((p for p in possible_index_paths if os.path.exists(p)), possible_index_paths[0])
+        
+        if doc_path is None:
+            doc_path = next((p for p in possible_doc_paths if os.path.exists(p)), possible_doc_paths[0])
         
         # Load FAISS index
         if os.path.exists(index_path):
             self.index = faiss.read_index(index_path)
         else:
-            raise FileNotFoundError(f"FAISS index not found at {index_path}")
+            raise FileNotFoundError(f"FAISS index not found at {index_path}. Tried: {possible_index_paths}")
         
         # Load documents metadata
         if os.path.exists(doc_path):
             with open(doc_path, 'rb') as f:
                 self.documents = pickle.load(f)
         else:
-            raise FileNotFoundError(f"Documents metadata not found at {doc_path}")
+            raise FileNotFoundError(f"Documents metadata not found at {doc_path}. Tried: {possible_doc_paths}")
     
     def retrieve(self, query: str, k: int = 3) -> List[Dict[str, Any]]:
         """Retrieve top-k most relevant documents for the query."""

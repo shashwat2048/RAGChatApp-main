@@ -1,0 +1,25 @@
+# Dockerfile for Streamlit frontend
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirement.txt .
+
+# Install dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirement.txt
+
+# Copy application code
+COPY . .
+
+# Expose Streamlit port
+EXPOSE 8501
+
+# Run Streamlit
+CMD ["streamlit", "run", "app/streamlit_app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+

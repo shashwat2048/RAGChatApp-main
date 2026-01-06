@@ -1,1 +1,43 @@
+# Environment variables
 .env
+.env.local
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Logs
+*.log
+logs/
+app.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test results (keep test scripts, remove results)
+*_TEST_RESULTS.md
+TEST_RESULTS.md
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+
+# Docker
+.dockerignore
+
+# Large image files (optional - uncomment if you don't want to commit)
+# *.png
+# structure_image.png
+# overview_image.png

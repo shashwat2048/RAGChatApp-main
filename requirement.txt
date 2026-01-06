@@ -1,14 +1,30 @@
-langchain_community
-langchain_huggingface
-gradio
-faiss-cpu
-sentence-transformers
-transformers
-streamlit>=1.28.0
+# Core dependencies
 faiss-cpu>=1.7.0
+sentence-transformers>=2.2.0
 google-generativeai>=0.3.0
 python-dotenv>=0.19.0
 numpy>=1.21.0
-sentence-transformers>=2.2.0
+
+# FastAPI and API dependencies
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.0.0
+python-multipart>=0.0.6
+
+# Streamlit (for UI)
+streamlit>=1.28.0
+
+# Document processing
 pypdf2>=1.27.0
 python-docx>=0.8.11
+
+# Optional: LangChain (if needed)
+langchain_community
+langchain_huggingface
+transformers
+
+# Optional: Gradio (if needed)
+gradio
+
+# Production dependencies
+requests>=2.31.0

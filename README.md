@@ -8,12 +8,16 @@ This RAG chatbot combines the power of semantic search with large language model
 
 ## ✨ Features
 
+- **Production-Grade API**: FastAPI backend with REST endpoints, proper error handling, and logging
 - **Document-based Q&A**: Ask questions about your documents and get accurate answers
 - **Semantic Search**: Uses FAISS vector database for efficient document retrieval
 - **Context-Aware Responses**: Maintains conversation history for better context understanding
+- **Docker Support**: Fully containerized with Docker and Docker Compose for easy deployment
 - **Modern Web UI**: Beautiful Streamlit-based interface for easy interaction
 - **Multiple Document Support**: Process and query multiple text documents simultaneously
 - **Chunked Processing**: Intelligent text chunking with overlap for better context retrieval
+- **Health Checks**: Built-in health monitoring endpoints
+- **Session Management**: Support for multiple conversation sessions
 
 ## 🏗️ Architecture
 
@@ -28,10 +32,13 @@ User Query → Document Retriever (FAISS) → Relevant Context → Gemini LLM �
 
 ## 🛠️ Technologies Used
 
-- **Streamlit**: Web application framework
+- **FastAPI**: Modern, fast web framework for building APIs
+- **Streamlit**: Web application framework for UI
 - **Google Gemini API**: Large language model for response generation
 - **FAISS**: Facebook AI Similarity Search for vector database
 - **Sentence Transformers**: Text embeddings using `all-MiniLM-L6-v2` model
+- **Docker**: Containerization for deployment
+- **Uvicorn**: ASGI server for FastAPI
 - **Python**: Core programming language
 
 ## 📦 Installation
@@ -79,21 +86,105 @@ User Query → Document Retriever (FAISS) → Relevant Context → Gemini LLM �
 
 ## 🚀 Usage
 
-### Running the Application
+### Option 1: Docker Deployment (Recommended)
 
-1. **Start the Streamlit app**
+1. **Set up environment variables**
+   
+   Create a `.env` file in the root directory:
+   ```env
+   GEMINI_API_KEY=your_gemini_api_key_here
+   ```
+
+2. **Build and run with Docker Compose**
+   ```bash
+   docker-compose up --build
+   ```
+
+3. **Access the services**
+   - **FastAPI Backend**: `http://localhost:8000`
+   - **API Documentation**: `http://localhost:8000/docs`
+   - **Streamlit UI**: `http://localhost:8501` (if enabled)
+
+4. **Run only the API service**
+   ```bash
+   docker-compose up rag-api
+   ```
+
+### Option 2: Local Development
+
+1. **Install dependencies**
+   ```bash
+   pip install -r requirement.txt
+   ```
+
+2. **Set up environment variables**
+   
+   Create a `.env` file:
+   ```env
+   GEMINI_API_KEY=your_gemini_api_key_here
+   ```
+
+3. **Build the vector index** (if not already built)
+   ```bash
+   cd src
+   python build_index.py
+   ```
+
+4. **Run FastAPI backend**
+   ```bash
+   uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
+   ```
+
+5. **Run Streamlit UI** (optional)
    ```bash
    streamlit run app/streamlit_app.py
    ```
 
-2. **Access the web interface**
-   - The app will open automatically in your browser
-   - Or navigate to `http://localhost:8501`
+### Using the API
 
-3. **Using the Chatbot**
-   - Enter your Gemini API key in the sidebar (if not set in `.env`)
-   - Type your question in the chat input
-   - Get answers based on your documents!
+#### Interactive API Documentation
+
+Visit `http://localhost:8000/docs` for Swagger UI or `http://localhost:8000/redoc` for ReDoc.
+
+#### Example API Calls
+
+**Chat Endpoint:**
+```bash
+curl -X POST "http://localhost:8000/chat" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "What are the key points about Chartered Accountants?",
+    "use_history": true,
+    "session_id": "user-123"
+  }'
+```
+
+**Health Check:**
+```bash
+curl http://localhost:8000/health
+```
+
+**Clear Session:**
+```bash
+curl -X DELETE "http://localhost:8000/chat/session/user-123"
+```
+
+#### Python Client Example
+
+```python
+import requests
+
+# Chat endpoint
+response = requests.post(
+    "http://localhost:8000/chat",
+    json={
+        "query": "Tell me about startup funding strategies",
+        "use_history": True,
+        "session_id": "my-session"
+    }
+)
+print(response.json()["response"])
+```
 
 ### Example Questions
 
@@ -107,8 +198,11 @@ Based on the included documents (CA conservation and Startups), you can ask:
 ```
 RAGChatApp-main/
 │
+├── api/
+│   └── main.py              # FastAPI backend application
+│
 ├── app/
-│   ├── streamlit_app.py      # Main Streamlit web application
+│   ├── streamlit_app.py      # Streamlit web UI
 │   ├── chatbot.py            # RAG chatbot implementation
 │   ├── retriever.py          # Document retrieval using FAISS
 │   └── utils.py              # Utility functions (chunking, cleaning)
@@ -125,9 +219,55 @@ RAGChatApp-main/
 │   ├── faiss_index.pkl       # Document metadata
 │   └── doc_embeddings.npy    # Document embeddings (optional)
 │
+├── Dockerfile                # Docker configuration for API
+├── Dockerfile.streamlit      # Docker configuration for Streamlit UI
+├── docker-compose.yml        # Docker Compose orchestration
 ├── requirement.txt           # Python dependencies
 └── README.md                # This file
 ```
+
+## 📡 API Endpoints
+
+### `GET /`
+Root endpoint with API information.
+
+### `GET /health`
+Health check endpoint. Returns service status and chatbot initialization state.
+
+**Response:**
+```json
+{
+  "status": "ok",
+  "chatbot_initialized": true,
+  "message": "healthy"
+}
+```
+
+### `POST /chat`
+Main chat endpoint for querying the RAG chatbot.
+
+**Request Body:**
+```json
+{
+  "query": "Your question here",
+  "use_history": true,
+  "session_id": "optional-session-id"
+}
+```
+
+**Response:**
+```json
+{
+  "response": "Generated answer based on documents",
+  "session_id": "optional-session-id"
+}
+```
+
+### `DELETE /chat/session/{session_id}`
+Clear conversation history for a specific session.
+
+### `POST /chat/clear`
+Clear the default chatbot conversation history.
 
 ## ⚙️ Configuration
 
@@ -139,7 +279,7 @@ RAGChatApp-main/
    cd src
    python build_index.py
    ```
-3. Restart the Streamlit app
+3. Restart the API service (or rebuild Docker container)
 
 ### Customizing the Model
 
@@ -154,6 +294,19 @@ In `app/retriever.py`, modify the `k` parameter to retrieve more/fewer documents
 ```python
 def get_context(self, query: str, k: int = 3):  # Change k value
 ```
+
+### Environment Variables
+
+- `GEMINI_API_KEY`: Your Google Gemini API key (required)
+- `PYTHONUNBUFFERED`: Set to `1` for better logging in Docker
+
+### Docker Configuration
+
+Modify `docker-compose.yml` to:
+- Change port mappings
+- Add volume mounts
+- Configure environment variables
+- Adjust resource limits
 
 ## 🔧 How It Works
 
@@ -175,12 +328,78 @@ def get_context(self, query: str, k: int = 3):  # Change k value
    - Sends formatted prompt to Gemini API
    - Returns generated response to user
 
+## 🐳 Docker Commands
+
+### Build and Run
+```bash
+# Build and start all services
+docker-compose up --build
+
+# Run in detached mode
+docker-compose up -d
+
+# View logs
+docker-compose logs -f rag-api
+
+# Stop services
+docker-compose down
+
+# Rebuild specific service
+docker-compose build rag-api
+```
+
+### Individual Docker Commands
+```bash
+# Build image
+docker build -t rag-chatbot-api .
+
+# Run container
+docker run -p 8000:8000 -e GEMINI_API_KEY=your_key rag-chatbot-api
+
+# Run with volume mounts
+docker run -p 8000:8000 \
+  -e GEMINI_API_KEY=your_key \
+  -v $(pwd)/embeddings:/app/embeddings \
+  -v $(pwd)/data:/app/data \
+  rag-chatbot-api
+```
+
 ## 📝 Notes
 
 - The chatbot maintains conversation history for context-aware responses
 - Document chunks are retrieved based on cosine similarity
 - The app uses `gemini-2.5-flash` model by default
-- Chat history can be cleared using the sidebar button
+- Chat history can be cleared via API endpoints or Streamlit UI
+- Session management supports multiple concurrent users
+- Logs are written to `app.log` and console
+- Health checks are available at `/health` endpoint
+- API documentation is auto-generated at `/docs` (Swagger) and `/redoc` (ReDoc)
+
+## 🔒 Production Considerations
+
+For production deployment, consider:
+
+1. **Security**:
+   - Use environment variables for sensitive data
+   - Implement API rate limiting
+   - Add authentication/authorization
+   - Configure CORS properly (not `allow_origins=["*"]`)
+
+2. **Performance**:
+   - Use Redis for session management instead of in-memory
+   - Implement caching for frequent queries
+   - Use production ASGI server (Gunicorn + Uvicorn workers)
+   - Consider using FAISS-GPU for larger datasets
+
+3. **Monitoring**:
+   - Add structured logging
+   - Integrate with monitoring tools (Prometheus, Grafana)
+   - Set up alerting for health check failures
+
+4. **Scalability**:
+   - Use load balancer for multiple API instances
+   - Consider message queue for async processing
+   - Use distributed vector database for large-scale deployments
 
 ## 🤝 Contributing
 
@@ -195,7 +414,9 @@ This project is open source and available for educational purposes.
 - Google Gemini for the LLM API
 - Facebook AI Research for FAISS
 - Sentence Transformers for embeddings
+- FastAPI for the modern API framework
 - Streamlit for the web framework
+- Docker for containerization
 
 ---
 
